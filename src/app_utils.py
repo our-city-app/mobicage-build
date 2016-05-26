@@ -32,10 +32,12 @@ except ImportError:
 CURRENT_DIR = os.path.realpath(os.path.dirname(__file__))
 ICON_LIBRARY_PATH = os.path.realpath(os.path.join(CURRENT_DIR, '..', 'res', 'icons.zip'))
 
+
 def _create_dir_if_not_exists(path):
     path = os.path.dirname(path)
     if not os.path.exists(path):
         os.makedirs(path)
+
 
 def get_icon_from_library(name, size=512):
     zipf = ZipFile(ICON_LIBRARY_PATH)
@@ -43,6 +45,7 @@ def get_icon_from_library(name, size=512):
         return zipf.read("%s/%s.png" % (size, name))
     finally:
         zipf.close()
+
 
 def download_icon(icon_key, icon_color, icon_size, file_path):
     if icon_color:
@@ -57,6 +60,7 @@ def download_icon(icon_key, icon_color, icon_size, file_path):
     with open(file_path, 'wb+') as output:
         output.write(png_bytes)
 
+
 def create_trusstore(app_id, file_path):
     subprocess.check_output('cd %s; rm -f truststore.bks' % CURRENT_DIR, shell=True)
     command = 'cd %s; CLASSPATH=bcprov-jdk15on-146.jar keytool -noprompt -import -alias "ca cert" ' \
@@ -67,6 +71,7 @@ def create_trusstore(app_id, file_path):
 
     shutil.copy2(os.path.join(CURRENT_DIR, "truststore.bks"), file_path)
 
+
 def create_trusstore_der(app_id, file_path):
     subprocess.check_output('cd %s; rm -f truststore.der' % CURRENT_DIR, shell=True)
     subprocess.check_output(
@@ -74,11 +79,13 @@ def create_trusstore_der(app_id, file_path):
 
     shutil.copy2(os.path.join(CURRENT_DIR, "truststore.der"), file_path)
 
+
 def resize_image(src_img, dest_path, width, height):
     im1 = Image.open(src_img)
     im2 = im1.resize((width, height), Image.ANTIALIAS)  # best down-sizing filter
     _create_dir_if_not_exists(dest_path)
     im2.save(dest_path)
+
 
 def increase_canvas(src_img, dest_path, width, height):
     im1 = Image.open(src_img)
@@ -89,6 +96,7 @@ def increase_canvas(src_img, dest_path, width, height):
     im2.paste(im1, (x, y, x + im1.size[0], y + im1.size[1]))
     _create_dir_if_not_exists(dest_path)
     im2.save(dest_path)
+
 
 def copytree(src, dst, symlinks=False, ignore=None):
     names = os.listdir(src)
@@ -133,11 +141,13 @@ def get_license_header():
         license_text = f.read()
         return '/*\n%s\n */' % '\n'.join([' * ' + l for l in license_text.splitlines()])
 
+
 def parse_color(color):
     m = re.match("^#?([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})$", color)
     if not m:
         raise ValueError("%s is not a valid color." % color)
     return tuple(map(lambda x: int(x, 16), m.groups()))
+
 
 def recolor_png(png_bytes, source_color, target_color):
     def map_color(row, png_details):
@@ -155,18 +165,9 @@ def recolor_png(png_bytes, source_color, target_color):
     w.write(f, [map_color(row, p[3]) for row in c])
     return f.getvalue()
 
-def create_android_notification_icon(android_icon_filename, android_notification_icon_filename):
 
-    img = Image.open(android_icon_filename)
-    img = img.convert("RGBA")
-    datas = img.getdata()
-
-    newData = []
-    for item in datas:
-        if (item[0] == 255 and item[1] == 255 and item[2] == 255) or item[3] == 0:
-            newData.append((255, 255, 255, 0))
-        else:
-            newData.append((255, 255, 255, 255))
-
-    img.putdata(newData)
-    img.save(android_notification_icon_filename, "PNG")
+def create_background(src_file_path, dst_file_path):
+    '''Generate an image that can be used for repeating background (1px high) based on a given image.'''
+    img = Image.open(src_file_path)
+    w, h = img.size
+    img.crop((0, h - 1, w, h)).save(dst_file_path)
