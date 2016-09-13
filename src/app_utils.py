@@ -22,6 +22,8 @@ import subprocess
 from PIL import Image
 from zipfile import ZipFile
 
+from colour import Color
+
 import png
 
 try:
@@ -171,3 +173,39 @@ def create_background(src_file_path, dst_file_path):
     img = Image.open(src_file_path)
     w, h = img.size
     img.crop((0, h - 1, w, h)).save(dst_file_path)
+
+
+def create_button(destination_path, primary_color='red', secondary_color='green', width=200, height=50,
+                  transparency=50):
+    """
+    Creates an image with a colour gradient changing from primary_color to secondary_color, with the top half being
+     slightly transparant
+    Args:
+        destination_path (int): destination path
+        primary_color (unicode): colour at the left of the image. Can be a hex code e.g #ff0000 or a colour name like 'red'
+        secondary_color (unicode): colour at the right of the image. Can be a hex code e.g #ff0000 or a colour name like 'red'
+        width (int): width of the image
+        height (int): height of the image
+        transparency (int): 0-255, how transparent the top half of the image should be
+    """
+    primary_color = Color(primary_color)
+    secondary_color = Color(secondary_color)
+    colours = list(primary_color.range_to(secondary_color, width))
+    data = []
+    for h in range(height):
+        for w in range(width):
+            r = int(colours[w].get_red() * 255)
+            g = int(colours[w].get_green() * 255)
+            b = int(colours[w].get_blue() * 255)
+            data.append((r, g, b))
+    img = Image.new('RGB', (width, height), 255)
+    img.putdata(data)
+    if transparency:
+        draw_transparant_overlay(img, transparency)
+    img.save(destination_path)
+
+
+def draw_transparant_overlay(image, transparency):
+    overlay = Image.new('RGBA', image.size, (255, 255, 255, transparency))
+    offset = (0, -image.size[1] / 2)
+    image.paste(overlay, offset, overlay)
