@@ -14,15 +14,18 @@
 #
 # @@license_version:1.1@@
 
+from contextlib import contextmanager
 import itertools
 import os
 import re
 import shutil
 import subprocess
-from PIL import Image
 from zipfile import ZipFile
 
+from PIL import Image
+
 import png
+
 
 try:
     from cStringIO import StringIO
@@ -37,6 +40,14 @@ def _create_dir_if_not_exists(path):
     path = os.path.dirname(path)
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+@contextmanager
+def pushd(new_dir):
+    prev_dir = os.getcwd()
+    os.chdir(new_dir)
+    yield
+    os.chdir(prev_dir)
 
 
 def get_icon_from_library(name, size=512):
