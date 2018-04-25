@@ -98,6 +98,20 @@ def resize_image(src_img, dest_path, width, height):
     im2.save(dest_path)
 
 
+def with_background_color(src_file_path, dst_file_path, background_color):
+    """Put the image on a background of `background_color`
+
+    Args:
+        image (Image)
+        background_color (tuple): with the same mode of `image`
+    """
+    image = Image.open(src_file_path)
+    back_image = Image.new(image.mode, image.size, parse_color(background_color))
+    back_image.paste(image, (0, 0), mask=image)
+    _create_dir_if_not_exists(dst_file_path)
+    back_image.save(dst_file_path)
+
+
 def increase_canvas(src_img, dest_path, width, height):
     im1 = Image.open(src_img)
     im2 = Image.new("RGBA", (width, height))
