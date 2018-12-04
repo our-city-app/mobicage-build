@@ -17,18 +17,18 @@
 #
 # @@license_version:1.5@@
 
-from contextlib import contextmanager
 import itertools
 import os
 import re
 import shutil
 import subprocess
+import warnings
+from contextlib import contextmanager
 from zipfile import ZipFile
 
 from PIL import Image
 
 import png
-
 
 try:
     from cStringIO import StringIO
@@ -223,6 +223,7 @@ def colorscale(hexstr, scalefactor):
     # >>> colorscale("#4F75D2", 1)
     #4F75D2
     """
+    warnings.warn('Use lighten_color or darken_color instead', DeprecationWarning)
 
     hexstr = hexstr.strip('#')
 
@@ -234,5 +235,111 @@ def colorscale(hexstr, scalefactor):
     r = clamp(r * scalefactor)
     g = clamp(g * scalefactor)
     b = clamp(b * scalefactor)
+
+    return "#%02x%02x%02x" % (r, g, b)
+
+
+# See https://medium.com/@anthony.st91/darken-or-lighten-a-color-in-android-ae70b63a249e
+def lighten_color(color, value):
+    hsl = rgb_to_hsl(color)
+    hsl[2] += value
+    # Increases the luminance of the colors
+    hsl[2] = max(0.0, min(hsl[2], 1.0))
+    return hsl_to_rgb(hsl)
+
+
+def darken_color(color, value):
+    hsl = rgb_to_hsl(color)
+    hsl[2] -= value
+    # Increases the luminance of the colors
+    hsl[2] = max(0.0, min(hsl[2], 1.0))
+    return hsl_to_rgb(hsl)
+
+
+# Port from android.support.v4.graphics.ColorUtils
+
+def rgb_to_hsl(rgb):
+    rgb = rgb.strip('#')
+    rf, gf, bf = int(rgb[:2], 16) / 255.0, int(rgb[2:4], 16) / 255.0, int(rgb[4:], 16) / 255.0
+
+    maximum = max(rf, max(gf, bf))
+    minimum = min(rf, min(gf, bf))
+    delta = maximum - minimum
+
+    l = (maximum + minimum) / 2.0
+
+    if maximum == minimum:
+        # Monochromatic
+        h = s = 0.0
+    else:
+        if maximum == rf:
+            h = ((gf - bf) / delta) % 6.0
+        elif maximum == gf:
+            h = ((bf - rf) / delta) + 2.0
+        else:
+            h = ((rf - gf) / delta) + 4.0
+
+        s = delta / (1.0 - abs(2.0 * l - 1.0))
+
+    h = h * 60.0 % 360
+    if h < 0:
+        h += 360
+
+    hsl = [0, 0, 0]
+    hsl[0] = constrain(h, 0.0, 360.0)
+    hsl[1] = constrain(s, 0.0, 1.0)
+    hsl[2] = constrain(l, 0.0, 1.0)
+    return hsl
+
+
+def constrain(amount, low, high):
+    if amount < low:
+        return low
+    else:
+        if amount > high:
+            return high
+        return amount
+
+
+def hsl_to_rgb(hsl):
+    h, s, l = hsl
+    c = (1.0 - abs(2 * l - 1.0)) * s
+    m = l - 0.5 * c
+    x = c * (1.0 - abs((h / 60.0 % 2.0) - 1.0))
+
+    hue_segment = int(h / 60)
+
+    r = 0
+    g = 0
+    b = 0
+
+    if hue_segment == 0:
+        r = round(255 * (c + m))
+        g = round(255 * (x + m))
+        b = round(255 * m)
+    elif hue_segment == 1:
+        r = round(255 * (x + m))
+        g = round(255 * (c + m))
+        b = round(255 * m)
+    elif hue_segment == 2:
+        r = round(255 * m)
+        g = round(255 * (c + m))
+        b = round(255 * (x + m))
+    elif hue_segment == 3:
+        r = round(255 * m)
+        g = round(255 * (x + m))
+        b = round(255 * (c + m))
+    elif hue_segment == 4:
+        r = round(255 * (x + m))
+        g = round(255 * m)
+        b = round(255 * (c + m))
+    elif hue_segment in (5, 6):
+        r = round(255 * (c + m))
+        g = round(255 * m)
+        b = round(255 * (x + m))
+
+    r = constrain(r, 0, 255)
+    g = constrain(g, 0, 255)
+    b = constrain(b, 0, 255)
 
     return "#%02x%02x%02x" % (r, g, b)
