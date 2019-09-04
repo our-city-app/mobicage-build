@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018 Mobicage NV
-# NOTICE: THIS FILE HAS BEEN MODIFIED BY MOBICAGE NV IN ACCORDANCE WITH THE APACHE LICENSE VERSION 2.0
+# Copyright 2019 Green Valley Belgium NV
+# NOTICE: THIS FILE HAS BEEN MODIFIED BY GREEN VALLEY BELGIUM NV IN ACCORDANCE WITH THE APACHE LICENSE VERSION 2.0
 # Copyright 2018 GIG Technology NV
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# @@license_version:1.5@@
+# @@license_version:1.6@@
 
-import itertools
 import os
 import re
 import shutil
@@ -26,6 +25,7 @@ import warnings
 from contextlib import contextmanager
 from zipfile import ZipFile
 
+import itertools
 from PIL import Image
 
 import png
